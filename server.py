@@ -280,7 +280,10 @@ class DeviceMonitor:
                         p["$datatype"] = "integer"
                     p["$format"] = "{}:{}".format(dp.int_min, dp.int_max)
                     if dp.unit:
-                        p["$unit"] = dp.unit
+                        if dp.unit == "Kw·h":
+                            p["$unit"] = "kWh"
+                        else:
+                            p["$unit"] = dp.unit
                 elif dp.value_type == "enum":
                     p["$datatype"] = dp.value_type
                     p["$format"] = ""
