@@ -408,8 +408,7 @@ class DeviceMonitor:
 
     def loop(self):
         while True:
-            # try:
-            while True:
+            try:
                 if datetime.now() > self.homie_init_time + timedelta(
                     seconds=HOMIE_INIT_SECONDS
                 ):
@@ -438,12 +437,12 @@ class DeviceMonitor:
                 logger.debug(" > Send Heartbeat Ping to {} < ".format(self.label))
                 payload = self.device.generate_payload(tinytuya.HEART_BEAT)
                 self.device.send(payload)
-        # except:
-        #    logger.error("Error in loop for device {}".format(self.label))
-        #    time.sleep(DEVICE_RECONNECT_SECONDS)
-        #    self.tuya_connect()
-        #    self.mqtt_connect()
-        #    self.homie_init()
+            except:
+                logger.error("Error in loop for device {}".format(self.label))
+                time.sleep(DEVICE_RECONNECT_SECONDS)
+                self.tuya_connect()
+                self.mqtt_connect()
+                self.homie_init()
 
 
 def start_device_monitor(device_info):
