@@ -1,0 +1,18 @@
+y[Unit]
+Description=Starts and stops the Tuya MQTT service.
+Documentation=https://github.com/spinza/tuya_mqtt
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=tuya
+Group=tuya
+WorkingDirectory=/opt/tuya_mqtt/
+PermissionsStartOnly=true
+ExecStart=/opt/tuya_mqtt/.venv/bin/python /opt/tuya_mqtt/server.py
+# Shutdown delay in seconds, before process is tried to be killed with KILL (if configured)
+TimeoutStopSec=20
+SyslogIdentifier=tuya_mqtt
+
+[Install]
+WantedBy=multi-user.target
