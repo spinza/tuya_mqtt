@@ -56,6 +56,7 @@ class DeviceMonitor:
         self.homie_device_info = []  # list of nodes and properties
         self.homie_init_time = datetime(1900, 1, 1)
         self.homie_publish_all_time = datetime(1900, 1, 1)
+        self.tuya_last_data_time = datetime.now()
 
         logger.info("Initialising device instance for {}...".format(self.label))
 
@@ -424,6 +425,7 @@ class DeviceMonitor:
                     self.homie_publish_all_time = datetime.now()
                 else:
                     # See if any data is available
+                    logger.debug("Receiving data from {}...".format(self.label))
                     data = self.device.receive()
 
                 if data != None:
@@ -432,7 +434,14 @@ class DeviceMonitor:
                             self.label, data["dps_printable"]
                         )
                     )
+                    self.tuya_last_data_time = datetime.now()
                     self.homie_publish_dps_objects(data["dps_objects"])
+                elif datetime.now() > self.tuya_last_data_time + timedelta(seconds = DEVICE_ASSUME_DEAD_SECONDS):
+                    logger.error("No recent data from {}".format(self.label))
+                    self.tuya_connect()
+                    self.mqtt_connect()
+                    self.homie_init()
+
                 # Send keyalive heartbeat
                 logger.debug(" > Send Heartbeat Ping to {} < ".format(self.label))
                 payload = self.device.generate_payload(tinytuya.HEART_BEAT)
