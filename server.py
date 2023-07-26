@@ -490,49 +490,55 @@ class DeviceMonitor:
 
     def loop(self):
         while True:
-            try:
-                if datetime.now() > self.homie_init_time + timedelta(
-                    seconds=HOMIE_INIT_SECONDS
-                ):
-                    self.status = self.device.status()
-                    logger.info("Fetched status of {}...".format(self.label))
-                    self.homie_init()
-                if datetime.now() > self.homie_publish_all_time + timedelta(
-                    seconds=HOMIE_PUBLISH_ALL_SECONDS
-                ):
-                    self.status = self.device.status()
-                    logger.info("Fetched status of {}...".format(self.label))
-                    data = self.status
-                    self.homie_publish_all_time = datetime.now()
-                else:
-                    # See if any data is available
-                    logger.debug("Receiving data from {}...".format(self.label))
-                    data = self.device.receive()
+            # try:
+            if not (self.tuya_connected and self.mqtt_connected):
+                self.tuya_connect()
+                self.mqtt_connect()
+                self.homie_init()
+            if datetime.now() > self.homie_init_time + timedelta(
+                seconds=HOMIE_INIT_SECONDS
+            ):
+                self.status = self.device.status()
+                logger.info("Fetched status of {}...".format(self.label))
+                self.homie_init()
+            if datetime.now() > self.homie_publish_all_time + timedelta(
+                seconds=HOMIE_PUBLISH_ALL_SECONDS
+            ):
+                data = self.device.status()
+                logger.info("Fetched status of {}...".format(self.label))
+                self.status = data
+                self.homie_publish_all_time = datetime.now()
+            else:
+                # See if any data is available
+                logger.debug("Receiving data from {}...".format(self.label))
+                data = self.device.receive()
 
-                if data != None:
+            if data != None:
+                if "dps_printable" in data:
                     logger.info(
                         "Received Payload from {}: {}".format(
                             self.label, data["dps_printable"]
                         )
                     )
+                if "dps_objects" in data:
                     self.tuya_last_data_time = datetime.now()
                     self.homie_publish_dps_objects(data["dps_objects"])
-                elif datetime.now() > self.tuya_last_data_time + timedelta(seconds = DEVICE_ASSUME_DEAD_SECONDS):
-                    logger.error("No recent data from {}".format(self.label))
-                    self.tuya_connect()
-                    self.mqtt_connect()
-                    self.homie_init()
+            elif datetime.now() > self.tuya_last_data_time + timedelta(
+                seconds=DEVICE_ASSUME_DEAD_SECONDS
+            ):
+                logger.error("No recent data from {}".format(self.label))
+                self.tuya_connected = False
+                self.mqtt_connected = False
 
-                # Send keyalive heartbeat
-                logger.debug(" > Send Heartbeat Ping to {} < ".format(self.label))
-                payload = self.device.generate_payload(tinytuya.HEART_BEAT)
-                self.device.send(payload)
-            except:
-                logger.error("Error in loop for device {}".format(self.label))
-                time.sleep(DEVICE_RECONNECT_SECONDS)
-                self.tuya_connect()
-                self.mqtt_connect()
-                self.homie_init()
+            # Send keyalive heartbeat
+            logger.debug(" > Send Heartbeat Ping to {} < ".format(self.label))
+            payload = self.device.generate_payload(tinytuya.HEART_BEAT)
+            self.device.send(payload)
+        # except:
+        #    logger.error("Error in loop for device {}".format(self.label))
+        #    self.tuya_connected = False
+        #    self.mqtt_connected = False
+        #    time.sleep(DEVICE_RECONNECT_SECONDS)
 
 
 def start_device_monitor(device_info):
