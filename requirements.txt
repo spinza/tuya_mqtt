@@ -11,7 +11,7 @@ pathspec==0.11.1
 platformdirs==3.9.1
 pycryptodome==3.18.0
 requests==2.31.0
--e git+git@github.com:spinza/tinytuya.git@79f67330db5c104a8d17b9036159c982358e09ff#egg=tinytuya
+-e git+https://github.com/uzlonewolf/tinytuya.git@79f67330db5c104a8d17b9036159c982358e09ff#egg=tinytuya
 tomli==2.0.1
 typing-extensions==4.7.1
 urllib3==2.0.4
