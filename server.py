@@ -421,7 +421,12 @@ class DeviceMonitor:
                         n["__topic__"],
                         p["__topic__"],
                     )
-                    self.homie_publish(topic, self.device_info[p["__tuya_code__"]])
+                    if p["$datatype"] == "boolean":
+                        self.homie_publish(
+                            topic, str(self.device_info[p["__tuya_code__"]]).lower()
+                        )
+                    else:
+                        self.homie_publish(topic, self.device_info[p["__tuya_code__"]])
 
     def homie_publish_dps_objects(self, dps_objects):
         n = next(
