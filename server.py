@@ -319,7 +319,16 @@ class DeviceMonitor:
         }
         for dp in self.status["dps_objects"]:
             if dp.value_type == "bitmap":
-                pass
+                for b in dp.bitmap:
+                    p = {
+                        "__topic__": format_homie_id(dp.name + b),
+                        "__tuya_code__": dp.name,
+                        "__tuya_bitmap_value__": b,
+                        "$name": dp.name,
+                        "$settable": "false",  # cannot set bitmaps here
+                        "$datatype": "boolean",
+                    }
+                    data_node["__properties__"].append(p)
             else:
                 append_property = True
                 p = {
@@ -386,7 +395,7 @@ class DeviceMonitor:
                     self.homie_publish(topic, n[k])
             for p in n["__properties__"]:
                 for k in p:
-                    if k not in ["__topic__", "__tuya_code__"]:
+                    if k not in ["__topic__", "__tuya_code__", "__tuya_bitmap_value__"]:
                         topic = "{}/{}/{}/{}/{}".format(
                             HOMIE_BASE_TOPIC,
                             self.homie_device_id,
@@ -417,20 +426,36 @@ class DeviceMonitor:
             n for n in self.homie_device_info["__nodes__"] if n["__topic__"] == "data"
         )
         for dp in dps_objects:
-            properties = filter(
-                lambda p: dp.name == p["__tuya_code__"], n["__properties__"]
-            )
-            for p in properties:
-                topic = "{}/{}/{}/{}".format(
-                    HOMIE_BASE_TOPIC,
-                    self.homie_device_id,
-                    n["__topic__"],
-                    p["__topic__"],
+            if dp.value_type == "bitmap":
+                for b in dp.bitmap:
+                    properties = filter(
+                        lambda p: dp.name == p["__tuya_code__"]
+                        and b == p["__tuya_bitmap_value__"],
+                        n["__properties__"],
+                    )
+                    for p in properties:
+                        topic = "{}/{}/{}/{}".format(
+                            HOMIE_BASE_TOPIC,
+                            self.homie_device_id,
+                            n["__topic__"],
+                            p["__topic__"],
+                        )
+                    self.homie_publish(topic, ("{}".format(b in dp.value)).lower())
+            else:
+                properties = filter(
+                    lambda p: dp.name == p["__tuya_code__"], n["__properties__"]
                 )
-                if dp.value_type == "boolean":
-                    self.homie_publish(topic, ("{}".format(dp.value)).lower())
-                else:
-                    self.homie_publish(topic, "{}".format(dp.value))
+                for p in properties:
+                    topic = "{}/{}/{}/{}".format(
+                        HOMIE_BASE_TOPIC,
+                        self.homie_device_id,
+                        n["__topic__"],
+                        p["__topic__"],
+                    )
+                    if dp.value_type == "boolean":
+                        self.homie_publish(topic, ("{}".format(dp.value)).lower())
+                    else:
+                        self.homie_publish(topic, "{}".format(dp.value))
 
     def homie_init(self, offline=True):
         # set device to init
