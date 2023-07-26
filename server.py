@@ -107,11 +107,65 @@ class DeviceMonitor:
                 time.sleep(DEVICE_RECONNECT_SECONDS)
 
     def homie_message(self, client, userdata, message):
+        m = str(message.payload.decode("utf-8"))
         logger.info(
-            "message topic={}, message={}".format(
-                message.topic, str(message.payload.decode("utf-8"))
-            )
+            "Received MQTT message topic={}, message={}".format(message.topic, m)
         )
+        topics = message.topic.split("/")
+        node_topic = topics[2]
+        property_topic = topics[3]
+        if node_topic != "data":
+            logger.error(
+                "Invalid node topic {} in received MQTT message.".format(node_topic)
+            )
+
+        # get data node
+        n = next(
+            n for n in self.homie_device_info["__nodes__"] if n["__topic__"] == "data"
+        )
+
+        properties = filter(
+            lambda p: property_topic == p["__topic__"], n["__properties__"]
+        )
+
+        for p in properties:
+            if p["$settable"] == "true" or p["$settable"] == True:
+                v = None
+                if p["$datatype"] == "boolean":
+                    if m in ["true", "True", "TRUE"]:
+                        v = True
+                    elif m in ["false", "False", "FALSE"]:
+                        v = False
+                    else:
+                        v = None
+                        logger.error("Invalid message {} for boolean type.".format(m))
+                elif p["$datatype"] in ("enum", "string"):
+                    v = str(m)
+                elif p["$datatype"] == "integer":
+                    try:
+                        v = int(m)
+                    except:
+                        v = None
+                        logger.error("Invalid message {} for integer type.".format(m))
+                elif p["$datatype"] == "float":
+                    try:
+                        v = float(m)
+                    except:
+                        v = None
+                        logger.error("Invalid message {} for float type.".format(m))
+                if v != None:
+                    self.device.set_value(p["__tuya_code__"], v)
+                    logger.info(
+                        "Set tuya code {} to value {} for {}.".format(
+                            p["__tuya_code__"], v, self.label
+                        )
+                    )
+            else:
+                logger.error(
+                    "Property topic {} in received MQTT message settable state is {}.".format(
+                        property_topic, p["$settable"]
+                    )
+                )
 
     def homie_publish(self, topic, message):
         self.mqtt.publish(
