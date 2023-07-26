@@ -346,6 +346,8 @@ class DeviceMonitor:
                     if dp.unit:
                         if dp.unit == "Kw·h":
                             p["$unit"] = "kWh"
+                        elif dp.unit == "hour":
+                            p["$unit"] = "h"
                         else:
                             p["$unit"] = dp.unit
                 elif dp.value_type == "enum":
