@@ -20,3 +20,8 @@ This links Tuya devices to MQTT using the following:
 8.  Copy `config_sample.py` to `config.py` and edit appropriately.
 9. You can then run the server by running `./server.py`.
 10. The service can also be activated copying the service file `tuya_mqtt.service` to an appropriate location and editing the file to match your setup.
+
+Some things to note:
+
+* Please make sure to set the instruction set to the full set per [these instructions](https://github.com/jasonacox/tinytuya/blob/master/DP_Mapping.md).
+* Note that you may need to rerun the wizard tool using `python -m tinytuya wizard` a day our two after first adding your device to ensure the full device details are populated.
