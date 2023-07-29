@@ -481,7 +481,10 @@ class DeviceMonitor:
             try:
                 logger.info("Connecting to {}...".format(self.label))
                 self.device = tinytuya.MappedDevice(
-                    dev_id=self.id, local_key=self.key, persist=True
+                    dev_id=self.id,
+                    local_key=self.key,
+                    persist=True,
+                    expand_bitmaps=False,
                 )
                 self.device.set_version(self.version)
                 self.status = self.device.status()
