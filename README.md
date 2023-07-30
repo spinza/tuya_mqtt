@@ -15,10 +15,10 @@ This links Tuya devices to MQTT using the following:
 6. Follow the instructions for `tinytuya` [here](https://pypi.org/project/tinytuya/).
   * Setup the Tuya app.
   * Setup a Tuya account.
-  * Run the wizard tool.
+  * Also try and activate the full DP settings [per these instructions](https://github.com/jasonacox/tinytuya/blob/master/DP_Mapping.md).
+  * Run the wizard tool (try and run it at least 24h after your devices was connected to the Tuya account/cloud).
   * Note the properites here is discovered via the cloud, so run the wizard tool at least 24h after your device was connected to the Tuya cloud.
-  * Also try and activate the full DP settings [per these instructions](https://github.com/jasonacox/tinytuya/blob/master/DP_Mapping.md). 
-7. You can then edit the `devices.json` to only include the devices you are interested in.
+  7. You can then edit the `devices.json` to only include the devices you are interested in.
 8.  Copy `config_sample.py` to `config.py` and edit appropriately.
 9. You can then run the server by running `./server.py`.
 10. The service can also be activated copying the service file `tuya_mqtt.service` to an appropriate location and editing the file to match your setup.
