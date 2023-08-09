@@ -524,13 +524,16 @@ class DeviceMonitor:
             # try:
             if not self.tuya_connected:
                 self.tuya_connect()
-                self.homie_init()
             if datetime.now() > self.homie_init_time + timedelta(
                 seconds=HOMIE_INIT_SECONDS
             ):
                 self.status = self.device.status()
                 logger.info("Fetched status of {}...".format(self.label))
-                self.homie_init()
+                if "dps_objects" in self.status:
+                    self.homie_init()
+                else:
+                    logger.error("No dps_objects in status. {} is probably disconnected.".format(self.label))
+                    self.tuya_connected = False
             if datetime.now() > self.homie_publish_all_time + timedelta(
                 seconds=HOMIE_PUBLISH_ALL_SECONDS
             ):
