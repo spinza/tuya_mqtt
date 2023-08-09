@@ -71,10 +71,36 @@ class DeviceMonitor:
         self.mqtt.will_set(
             topic, payload="lost", qos=HOMIE_MQTT_QOS, retain=HOMIE_MQTT_RETAIN
         )
+        # MQTT callback
+        self.mqtt.on_connect = self.on_mqtt_connect
+        self.mqtt.on_disconnect = self.on_mqtt_disconnect
 
         # Not connected
         self.tuya_connected = False
-        self.mqtt_connected = False
+
+        # connect to MQTT
+        self.mqtt_connect(
+            host=MQTT_HOST,
+            port=MQTT_PORT,
+            username=MQTT_USERNAME,
+            password=MQTT_PASSWORD,
+        )
+
+    def on_mqtt_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            logger.info("{} connected to MQTT...".format(self.label))
+            self.mqtt.subscribe(
+                "{}/{}/{}/{}/{}/{}".format(
+                    HOMIE_BASE_TOPIC, self.homie_device_id, "+", "+", "set", "#"
+                )
+            )
+        else:
+            logger.info("Connectetion to MQTT failed return code of {}.".format(rc))
+
+    def on_mqtt_disconnect(self, client, userdata, rc):
+        logger.error(
+            "MQTT was disconnected for {} with return code of {}".format(self.label, rc)
+        )
 
     def mqtt_connect(
         self,
@@ -85,29 +111,21 @@ class DeviceMonitor:
         keepalive=60,
         bind_address="",
     ):
-        self.mqtt_connected = False
-        while not self.mqtt_connected:
+        logger.info("{} connecting to mqtt...".format(self.label))
+        if username != None and password != None:
+            self.mqtt.username_pw_set(username=username, password=password)
+        error = True
+        while error:
             try:
-                self.mqtt.loop_stop()
-            except:
-                pass
-            try:
-                logger.info("{} connecting to mqtt...".format(self.label))
-                if username != None and password != None:
-                    self.mqtt.username_pw_set(username=username, password=password)
                 self.mqtt.connect(host, port, keepalive, bind_address)
-                self.mqtt.loop_start()
-                self.mqtt.subscribe(
-                    "{}/{}/{}/{}/{}/{}".format(
-                        HOMIE_BASE_TOPIC, self.homie_device_id, "+", "+", "set", "#"
-                    )
+                error = False
+            except Exception as e:
+                logger.error(
+                    "{} could not connect to mqtt due to {}.".format(self.label, e)
                 )
-                self.mqtt_connected = True
-                logger.info("{} connected to mqtt.".format(self.label))
-            except:
-                self.mqtt_connected = False
-                logger.exception("{} could not connect to mqtt.".format(self.label))
-                time.sleep(DEVICE_RECONNECT_SECONDS)
+                error = True
+                time.sleep(5)
+        self.mqtt.loop_start()
 
     def homie_message(self, client, userdata, message):
         m = str(message.payload.decode("utf-8"))
@@ -504,14 +522,8 @@ class DeviceMonitor:
     def loop(self):
         while True:
             # try:
-            if not (self.tuya_connected and self.mqtt_connected):
+            if not self.tuya_connected:
                 self.tuya_connect()
-                self.mqtt_connect(
-                    host=MQTT_HOST,
-                    port=MQTT_PORT,
-                    username=MQTT_USERNAME,
-                    password=MQTT_PASSWORD,
-                )
                 self.homie_init()
             if datetime.now() > self.homie_init_time + timedelta(
                 seconds=HOMIE_INIT_SECONDS
@@ -546,7 +558,6 @@ class DeviceMonitor:
             ):
                 logger.error("No recent data from {}".format(self.label))
                 self.tuya_connected = False
-                self.mqtt_connected = False
 
             # Send keyalive heartbeat
             logger.debug(" > Send Heartbeat Ping to {} < ".format(self.label))
@@ -555,7 +566,6 @@ class DeviceMonitor:
         # except:
         #    logger.error("Error in loop for device {}".format(self.label))
         #    self.tuya_connected = False
-        #    self.mqtt_connected = False
         #    time.sleep(DEVICE_RECONNECT_SECONDS)
 
 
@@ -582,6 +592,7 @@ if __name__ == "__main__":
 
     # create threads
     logger.info("Creating device threads...")
+
     threads = []
     for di in devices_info:
         threads.append(threading.Thread(target=start_device_monitor, args=(di,)))
