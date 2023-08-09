@@ -86,6 +86,9 @@ class DeviceMonitor:
             password=MQTT_PASSWORD,
         )
 
+        # do homie init
+        self.do_homie_init = True
+
     def on_mqtt_connect(self, client, userdata, flags, rc):
         if rc == 0:
             logger.info("{} connected to MQTT...".format(self.label))
@@ -94,6 +97,7 @@ class DeviceMonitor:
                     HOMIE_BASE_TOPIC, self.homie_device_id, "+", "+", "set", "#"
                 )
             )
+            self.do_homie_init = True
         else:
             logger.info("Connectetion to MQTT failed return code of {}.".format(rc))
 
@@ -497,6 +501,7 @@ class DeviceMonitor:
         self.homie_init_time = datetime.now()
         self.homie_publish_device_state("ready")
         logger.info("Intialised homie for {}.".format(self.label))
+        self.do_homie_init = False
 
     def tuya_connect(self):
         self.tuya_connected = False
@@ -524,7 +529,7 @@ class DeviceMonitor:
             # try:
             if not self.tuya_connected:
                 self.tuya_connect()
-            if datetime.now() > self.homie_init_time + timedelta(
+            if self.do_homie_init or datetime.now() > self.homie_init_time + timedelta(
                 seconds=HOMIE_INIT_SECONDS
             ):
                 self.status = self.device.status()
@@ -532,7 +537,11 @@ class DeviceMonitor:
                 if "dps_objects" in self.status:
                     self.homie_init()
                 else:
-                    logger.error("No dps_objects in status. {} is probably disconnected.".format(self.label))
+                    logger.error(
+                        "No dps_objects in status. {} is probably disconnected.".format(
+                            self.label
+                        )
+                    )
                     self.tuya_connected = False
             if datetime.now() > self.homie_publish_all_time + timedelta(
                 seconds=HOMIE_PUBLISH_ALL_SECONDS
