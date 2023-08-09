@@ -13,6 +13,9 @@ import logging
 # MQTT_HOST = "localhost"
 # MQTT_PORT = 1883
 # MQTT_KEEPALIVE = 60
+# MQTT user and password below only set if used
+# MQTT_USERNAME = "user"
+# MQTT_PASSWORD = "password"
 
 # tinutuya
 # DEVICE_FILE = "devices.json"

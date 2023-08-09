@@ -14,6 +14,8 @@ MQTT_HOST = "localhost"
 MQTT_PORT = 1883
 MQTT_KEEPALIVE = 60
 MQTT_CLIENT_ID = "tuya_mqtt"
+MQTT_USERNAME = None
+MQTT_PASSWORD = None
 
 # Homie Standard Items
 # https://homieiot.github.io/specification/spec-core-v4_0_0/

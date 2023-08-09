@@ -76,14 +76,7 @@ class DeviceMonitor:
         self.tuya_connected = False
         self.mqtt_connected = False
 
-        # connect
-        self.tuya_connect()
-        self.mqtt_connect()
-
-        # init
-        self.homie_init()
-
-    def mqtt_connect(self, host="localhost", port=1883, keepalive=60, bind_address=""):
+    def mqtt_connect(self, host="localhost", port=1883, username = None, password = None, keepalive=60, bind_address=""):
         self.mqtt_connected = False
         while not self.mqtt_connected:
             try:
@@ -92,6 +85,8 @@ class DeviceMonitor:
                 pass
             try:
                 logger.info("{} connecting to mqtt...".format(self.label))
+                if username != None and password !=None:
+                    self.mqtt.username_pw_set(username=username, password=password)
                 self.mqtt.connect(host, port, keepalive, bind_address)
                 self.mqtt.loop_start()
                 self.mqtt.subscribe(
@@ -501,7 +496,7 @@ class DeviceMonitor:
             # try:
             if not (self.tuya_connected and self.mqtt_connected):
                 self.tuya_connect()
-                self.mqtt_connect()
+                self.mqtt_connect(host=MQTT_HOST, port=MQTT_PORT, username=MQTT_USERNAME, password=MQTT_PASSWORD)
                 self.homie_init()
             if datetime.now() > self.homie_init_time + timedelta(
                 seconds=HOMIE_INIT_SECONDS
