@@ -486,7 +486,7 @@ class DeviceMonitor:
                         self.homie_publish(topic, "{}".format(dp.value))
 
     def homie_init(self, offline=True):
-        logger.info("Intialising homie for  {}...".format(self.label))
+        logger.info("Intialising homie for {}...".format(self.label))
         # set device to init
         self.homie_publish_device_state("init")
         self.create_homie_device_info()
@@ -496,7 +496,7 @@ class DeviceMonitor:
         self.homie_publish_device_info()
         self.homie_init_time = datetime.now()
         self.homie_publish_device_state("ready")
-        logger.info("Intialised homie for  {}.".format(self.label))
+        logger.info("Intialised homie for {}.".format(self.label))
 
     def tuya_connect(self):
         self.tuya_connected = False
