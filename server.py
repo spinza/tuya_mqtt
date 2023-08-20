@@ -360,7 +360,7 @@ class DeviceMonitor:
                     "__topic__": format_homie_id(dp.name),
                     "__tuya_code__": dp.name,
                     "$name": dp.name,
-                    "$settable": dp.settable,
+                    "$settable": str(dp.settable).lower(),
                 }
                 if dp.value_type == "integer":
                     if dp.int_step < 1:
