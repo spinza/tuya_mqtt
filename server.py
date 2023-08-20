@@ -521,7 +521,7 @@ class DeviceMonitor:
                 logger.info("Connected to {}...".format(self.label))
             except:
                 self.tuya_connected = False
-                logger.exception("Cound not connect to {}".format(self.label))
+                logger.error("Cound not connect to {}".format(self.label))
                 time.sleep(DEVICE_RECONNECT_SECONDS)
 
     def loop(self):
