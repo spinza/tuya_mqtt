@@ -145,9 +145,13 @@ class DeviceMonitor:
             )
 
         # get data node
-        n = next(
-            n for n in self.homie_device_info["__nodes__"] if n["__topic__"] == "data"
-        )
+        if "__nodes__" in self.homie_device_info:
+            n = next(
+                n for n in self.homie_device_info["__nodes__"] if n["__topic__"] == "data"
+            )
+        else:
+            logger.error("Message on topic {} ignored as we have no nodes for {} (Probably not connected).".format(message.topic,self.label))
+            return
 
         properties = filter(
             lambda p: property_topic == p["__topic__"], n["__properties__"]
