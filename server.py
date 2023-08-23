@@ -409,8 +409,11 @@ class DeviceMonitor:
             "$nodes": "",
             # "$extensions": "",
             "$implementation": HOMIE_IMPLEMENTATION,
-            "__nodes__": self.create_device_info_nodes(),
+            "__nodes__": [],
         }
+        if HOMIE_PUBLISH_DEVICE_INFO:
+            self.homie_device_info["__nodes__"] = self.create_device_info_nodes()
+
         self.create_data_node()
         self.update_device_nodes_properties()
 
