@@ -262,7 +262,7 @@ class DeviceMonitor:
                         "$retained": "true",
                         "$settable": "false",
                     },
-                    # this is ip at tiem devices file was created and may not be current
+                    # this is ip at time devices file was created and may not be current
                     # {
                     #     "__topic__": "ip",
                     #     "__tuya_code__": "ip",
