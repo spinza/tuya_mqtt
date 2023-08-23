@@ -28,6 +28,9 @@ HOMIE_MQTT_RETAIN = True
 HOMIE_PUBLISH_ALL_SECONDS = 60
 HOMIE_IMPLEMENTATION = "tuya_mqtt"
 
+# Home Assistant
+HASS_BASE_TOPIC = "homeassistant"
+
 # tinytuya
 DEVICE_FILE = "devices.json"
 DEVICE_RECONNECT_SECONDS = 60

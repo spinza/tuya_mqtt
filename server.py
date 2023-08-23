@@ -147,10 +147,16 @@ class DeviceMonitor:
         # get data node
         if "__nodes__" in self.homie_device_info:
             n = next(
-                n for n in self.homie_device_info["__nodes__"] if n["__topic__"] == "data"
+                n
+                for n in self.homie_device_info["__nodes__"]
+                if n["__topic__"] == "data"
             )
         else:
-            logger.error("Message on topic {} ignored as we have no nodes for {} (Probably not connected).".format(message.topic,self.label))
+            logger.error(
+                "Message on topic {} ignored as we have no nodes for {} (Probably not connected).".format(
+                    message.topic, self.label
+                )
+            )
             return
 
         properties = filter(
@@ -408,6 +414,115 @@ class DeviceMonitor:
         self.create_data_node()
         self.update_device_nodes_properties()
 
+    def get_hass_config_template(self):
+        topic = "{}/{}/{}".format(HOMIE_BASE_TOPIC, self.homie_device_id, "$state")
+        config_template = {
+            "availability": {
+                "topic": topic,
+                "payload_available": "ready",
+                "payload_not_available": "lost",
+            },
+            "availability_mode": "latest",
+            "device": {
+                "identifiers": [self.device_info["sn"], self.id, self.homie_device_id],
+                "model": self.device_info["product_name"],
+                "name": self.name,
+                "sw_version": self.version,
+                "via_device": MQTT_CLIENT_ID,
+            },
+        }
+        return config_template
+
+    def hass_publish_configs(self):
+        for n in self.homie_device_info["__nodes__"]:
+            for p in n["__properties__"]:
+                component = "Unknown"
+                unique_id = (
+                    self.homie_device_id + "_" + n["__topic__"] + "_" + p["__topic__"]
+                )
+                config = self.get_hass_config_template()
+                config["name"] = p["$name"]
+                config["state_topic"] = "{}/{}/{}/{}".format(
+                    HOMIE_BASE_TOPIC,
+                    self.homie_device_id,
+                    n["__topic__"],
+                    p["__topic__"],
+                )
+                command_topic = "{}/{}/{}/{}/{}".format(
+                    HOMIE_BASE_TOPIC,
+                    self.homie_device_id,
+                    n["__topic__"],
+                    p["__topic__"],
+                    "set",
+                )
+
+                config["unique_id"] = unique_id
+                if p["$datatype"] == "boolean":
+                    config["payload_off"] = "false"
+                    config["payload_on"] = "true"
+                    if p["$settable"] == "true":
+                        component = "switch"
+                        config["optimistic"] = False
+                        config["command_topic"] = command_topic
+                    else:
+                        component = "binary_sensor"
+                elif p["$datatype"] in ("float", "integer"):
+                    if "$unit" in p:
+                        config["unit_of_measurement"] = p["$unit"]
+                    if p["$settable"] == "true":
+                        component = "number"
+                        config["optimistic"] = False
+                        config["command_topic"] = command_topic
+                        if "$format" in p:
+                            config["min"], config["max"] = p["$format"].split(":")
+                    else:
+                        component = "sensor"
+                elif p["$datatype"] == "string":
+                    if p["$settable"] == "true":
+                        component = "text"
+                        config["optimistic"] = False
+                        config["command_topic"] = command_topic
+                    else:
+                        component = "sensor"
+                elif p["$datatype"] == "enum":
+                    options = p["$format"].split(",")
+                    if len(options) == 2 and "On" in options and "Off" in options:
+                        config["payload_off"] = "Off"
+                        config["payload_on"] = "On"
+                        if p["$settable"] == "true":
+                            component = "switch"
+                            config["optimistic"] = False
+                            config["command_topic"] = command_topic
+                        else:
+                            component = "binary_sensor"
+                    else:
+                        if p["$settable"] == "true":
+                            component = "select"
+                            config["optimistic"] = False
+                            config["command_topic"] = command_topic
+                            config["options"] = p["$format"].split(",")
+                        else:
+                            component = "sensor"
+                else:
+                    logger.error(
+                        "Could not represent property {} of node {} for {}.".format(
+                            p["__topic__"], n["__topic__"], self.label
+                        )
+                    )
+
+                topic = "{}/{}/{}/{}".format(
+                    HASS_BASE_TOPIC,
+                    component,
+                    unique_id,
+                    "config",
+                )
+                config_serialised = json.dumps(config)
+                if component != "Unknown":
+                    # pprint(config_serialised)
+                    self.homie_publish(topic, config_serialised)
+                else:
+                    pprint(p)
+
     def homie_publish_device_state(self, state):
         topic = "{}/{}/{}".format(HOMIE_BASE_TOPIC, self.homie_device_id, "$state")
         self.homie_publish(topic, state)
@@ -499,10 +614,11 @@ class DeviceMonitor:
         self.homie_publish_device_state("init")
         self.create_homie_device_info()
         self.homie_init_device()
-
-        # device ready
+        self.hass_publish_configs()
         self.homie_publish_device_info()
         self.homie_init_time = datetime.now()
+
+        # device ready
         self.homie_publish_device_state("ready")
         logger.info("Intialised homie for {}.".format(self.label))
         self.do_homie_init = False

@@ -4,6 +4,7 @@ This links Tuya devices to MQTT using the following:
 
 * Devices are accessed using [tinytuya](https://pypi.org/project/tinytuya/) package.
 * Device details are published using the [Homie convention](https://homieiot.github.io/) on MQTT
+* Home Assistant configurations are also published so one should be able to integrate this with Home Assistant too.
 
 # Installation
 
