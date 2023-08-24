@@ -359,7 +359,7 @@ class DeviceMonitor:
                         "__topic__": format_homie_id(dp.name + b),
                         "__tuya_code__": dp.name,
                         "__tuya_bitmap_value__": b,
-                        "$name": dp.name,
+                        "$name": dp.name + " " + b,
                         "$settable": "false",  # cannot set bitmaps here
                         "$datatype": "boolean",
                     }
