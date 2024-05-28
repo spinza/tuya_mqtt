@@ -717,8 +717,8 @@ if __name__ == "__main__":
     # Read Devices.json
     try:
         # Load defaults
-        logger.debug("Loading device file {}...".format(TINYTUYA_DEVICE_FILE))
-        with open(TINYTUYA_DEVICE_FILE) as f:
+        logger.debug("Loading device file {}...".format(DEVICE_FILE))
+        with open(DEVICE_FILE) as f:
             devices_info = json.load(f)
     except:
         # No Device info
