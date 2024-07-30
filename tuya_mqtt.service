@@ -1,4 +1,4 @@
-y[Unit]
+[Unit]
 Description=Starts and stops the Tuya MQTT service.
 Documentation=https://github.com/spinza/tuya_mqtt
 Wants=network-online.target
